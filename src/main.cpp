@@ -56,8 +56,20 @@ bool is_touched_on_the_next_x_axis(
     const std::array<std::array<bool, W>, H> &grid_container,
     const std::vector<std::vector<bool>> &shape,
     const std::array<int, 2> shape_pos_grid,
-    const int offset_x // -1 (left) or 1 (right)
+    const int offset_x  // -1 (left) or 1 (right)
 );
+template <size_t W, size_t H>
+int erase_completed_rows(std::array<std::array<bool, W>, H> &grid_container);
+template <size_t W, size_t H>
+void erase_row(std::array<std::array<bool, W>, H> &grid_container,
+               const int row);
+
+template <size_t W, size_t H>
+void shift_down_floating_rows(
+    std::array<std::array<bool, W>, H> &grid_container);
+template <size_t W, size_t H>
+void shift_down_rows(std::array<std::array<bool, W>, H> &grid_container,
+                     const int start_row, const int offset);
 
 int main() {
   std::array<int, 2> window_size = {640, 800};
@@ -79,7 +91,6 @@ void run(const std::array<int, 2> window_size) {
 
   std::array<std::array<bool, grid_size[SIZE::W]>, grid_size[SIZE::H]>
       grid_container = {};
-
   const int cell_size_px = 20;
   const std::array<u_int8_t, 4> cell_color_rgba = {100, 200, 150, 255};
 
@@ -88,6 +99,7 @@ void run(const std::array<int, 2> window_size) {
 
   const std::vector<std::vector<std::vector<bool>>> shapes = {I, J, L, O,
                                                               S, T, Z};
+
   // apply random color
   constexpr std::array<u_int8_t, 4> shape_color_rgba = {200, 100, 0,
                                                         255};  // red
@@ -188,6 +200,10 @@ void run(const std::array<int, 2> window_size) {
           enroll_shape_queue(shape_queue, shapes);
     }
 
+    if (erase_completed_rows(grid_container) > 0) {
+      shift_down_floating_rows(grid_container);
+    }
+
     // render
     BeginDrawing();
     ClearBackground(BLACK);
@@ -200,6 +216,59 @@ void run(const std::array<int, 2> window_size) {
               cell_color_rgba);
 
     EndDrawing();
+  }
+}
+
+// returns how many rows that are erased
+template <size_t W, size_t H>
+int erase_completed_rows(std::array<std::array<bool, W>, H> &grid_container) {
+  int erased_rows = 0;
+
+  for (int i = grid_container.size() - 1; i >= 0; i--) {
+    int block_count = 0;
+    for (auto &&col : grid_container.at(i)) {
+      if (!col) {
+        break;
+      }
+      block_count++;
+    }
+
+    if (block_count == grid_container.at(i).size()) {
+      erase_row(grid_container, i);
+      erased_rows++;
+    }
+  }
+
+  return erased_rows;
+}
+
+template <size_t W, size_t H>
+void erase_row(std::array<std::array<bool, W>, H> &grid_container,
+               const int row) {
+  for (auto &&i : grid_container.at(row)) {
+    i = 0;
+  }
+}
+
+template <size_t W, size_t H>
+void shift_down_floating_rows(
+    std::array<std::array<bool, W>, H> &grid_container) {
+  int grid_column_size = grid_container.at(0).size();
+
+  for (size_t col = 0; col < grid_column_size; col++) {
+    int offset = 0;
+
+    for (size_t row = grid_container.size() - 1; row >= 1; row--) {
+      bool *val = &grid_container.at(row).at(col);
+
+      if (!*val) {
+        offset++;
+        continue;
+      }
+
+      grid_container.at(row + offset).at(col) = *val;
+      *val = false;
+    }
   }
 }
 
