@@ -45,6 +45,12 @@ void enroll_shape_queue(
     std::array<std::vector<std::vector<bool>>, 2> &shape_queue,
     const std::vector<std::vector<std::vector<bool>>> &shapes);
 
+template <size_t W, size_t H>
+bool is_on_top_of_another_shape(
+    const std::array<std::array<bool, W>, H> &grid_container,
+    const std::vector<std::vector<bool>> &shape,
+    const std::array<int, 2> shape_pos_grid);
+
 int main() {
   std::array<int, 2> window_size = {640, 800};
   std::string window_title = "Tetris";
@@ -60,11 +66,6 @@ int main() {
 }
 
 void run(const std::array<int, 2> window_size) {
-  const std::vector<std::vector<std::vector<bool>>> shapes = {I, J, L, O,
-                                                              S, T, Z};
-  // apply random color
-  constexpr std::array<u_int8_t, 4> shape_color_rgba = {200, 0, 0, 255};  // red
-
   // grid width and height
   constexpr std::array<int, 2> grid_size = {20, 40};
 
@@ -76,6 +77,12 @@ void run(const std::array<int, 2> window_size) {
 
   // shape spawn area width from the top of screen
   constexpr std::array<int, 2> spawn_area_range = {5, 15};
+
+  const std::vector<std::vector<std::vector<bool>>> shapes = {I, J, L, O,
+                                                              S, T, Z};
+  // apply random color
+  constexpr std::array<u_int8_t, 4> shape_color_rgba = {200, 100, 0,
+                                                        255};  // red
 
   // get first and second shape
   std::array<std::vector<std::vector<bool>>, 2> shape_queue = {
@@ -110,12 +117,10 @@ void run(const std::array<int, 2> window_size) {
       action = ACTION::MOVE_RIGHT;
     if (IsKeyPressed(KEY_SPACE)) action = ACTION::FREE_FALL;
 
-    // get delta time if already one second then apply offset - 1 on y axis
-
+    // get delta time if already passed interval limit then apply offset + 1 on
+    // y axis
     const float delta_time_seconds = GetFrameTime();
     accumulated_time_seconds += delta_time_seconds;
-
-    // main moving
     if (accumulated_time_seconds >= move_interval_seconds) {
       accumulated_time_seconds = 0.f;
       shape_pos_grid[POS::Y] += 1;
@@ -145,45 +150,29 @@ void run(const std::array<int, 2> window_size) {
 
     action = ACTION::NONE;
 
-    // if already on bottom then use second shape and pick new shape for the
-    // third one
+    const bool on_bottom =
+        shape_pos_grid[POS::Y] + shape.size() - 1 >= grid_size[SIZE::H];
 
-    BeginDrawing();
-    ClearBackground(BLACK);
-
-    // check if the shape was on the bottom
-    // find the max height and check against the bottom position
-    // int test_y = static_cast<float>(shape_pos_grid[POS::Y] + shape.size() -
-    // 1) /
-    //              grid_size[SIZE::H] * window_size[SIZE::H];
-
-    // DrawRectangle(10, test_y, 20, 20, BLUE);
-
-
-    if (shape_pos_grid[POS::Y] + shape.size() - 1 >= grid_size[SIZE::H]) {
-      std::cout << "fill the grid" << std::endl;
-
-      fill_grid_container<grid_size[SIZE::W], grid_size[SIZE::H]>(
-          grid_container, shape, shape_pos_grid);
+    if (on_bottom ||
+        is_on_top_of_another_shape(grid_container, shape, shape_pos_grid)) {
+      fill_grid_container(grid_container, shape, shape_pos_grid);
 
       shape_pos_grid[POS::Y] = 0;
 
+      // use the next shape
       enroll_shape_queue(shape_queue, shapes);
     }
-    // check if the shape was on top of another shape
-    // find the x axis position of the shape and then check on the grid
-    // container for that axis if containing any occupied block there
 
-    // std::cout << shape_pos_grid[POS::X] << " - " << shape_pos_grid[POS::Y] <<
-    // " - " << shape_size_grid[SIZE::W] << " - " << shape_size_grid[SIZE::H] <<
-    // " - " << delta_time_seconds << " - " << accumulated_time_seconds <<
-    // std::endl;
+    // render
+    BeginDrawing();
+    ClearBackground(BLACK);
+
     draw_shape(shape, shape_pos_grid[POS::X], shape_pos_grid[POS::Y],
                shape_size_grid[SIZE::W], shape_size_grid[SIZE::H],
                shape_color_rgba, grid_size, window_size, cell_size_px);
 
-    draw_grid<grid_size[SIZE::W], grid_size[SIZE::H]>(
-        grid_container, grid_size, window_size, cell_size_px, cell_color_rgba);
+    draw_grid(grid_container, grid_size, window_size, cell_size_px,
+              cell_color_rgba);
 
     EndDrawing();
   }
@@ -194,6 +183,32 @@ void enroll_shape_queue(
     const std::vector<std::vector<std::vector<bool>>> &shapes) {
   shape_queue[0] = shape_queue[1];
   shape_queue[1] = shapes.at(GetRandomValue(0, shapes.size() - 1));
+}
+
+template <size_t W, size_t H>
+bool is_on_top_of_another_shape(
+    const std::array<std::array<bool, W>, H> &grid_container,
+    const std::vector<std::vector<bool>> &shape,
+    const std::array<int, 2> shape_pos_grid) {
+  int y = shape_pos_grid[POS::Y];
+
+  for (const auto &row : shape) {
+    int x = shape_pos_grid[POS::X];
+
+    for (const auto &col : row) {
+      int col_x = x++;
+      if (!col) {
+        continue;
+      }
+
+      if (grid_container.at(y).at(col_x)) {
+        return true; 
+      }
+    }
+
+    y++;
+  }
+  return false;
 }
 
 template <size_t W, size_t H>
