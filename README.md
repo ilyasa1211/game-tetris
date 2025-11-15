@@ -6,3 +6,5 @@
 - Multi Color (Optional)
 - Sounds
 - Scores
+- Press Space to insta-place
+- Web Support (WASM)
