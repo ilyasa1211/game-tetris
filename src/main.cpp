@@ -1,22 +1,22 @@
+#include <raylib.h>
+
+#include <array>
 #include <iostream>
 #include <vector>
-#include <raylib.h>
+
 #include "shapes.h"
 
-enum POS
-{
+enum POS {
   X,
   Y,
 };
 
-enum SIZE
-{
+enum SIZE {
   W,
   H,
 };
 
-enum ACTION
-{
+enum ACTION {
   NONE,
   MOVE_RIGHT,
   MOVE_LEFT,
@@ -24,15 +24,32 @@ enum ACTION
   FREE_FALL,
 };
 
-void run(const int window_size[2]);
-void draw_shape(const std::vector<std::vector<bool>> &shape, int x, int y, const int width, const int height, const u_int8_t color[4], const int grid_size[2], const int window_size[2]);
+void run(const std::array<int, 2> window_size);
+void draw_shape(const std::vector<std::vector<bool>> &shape, int x, int y,
+                const int width, const int height,
+                const std::array<u_int8_t, 4> color,
+                const std::array<int, 2> grid_size,
+                const std::array<int, 2> window_size, const int cell_size_px);
+template <size_t W, size_t H>
+void draw_grid(const std::array<std::array<bool, W>, H> &grid_container,
+               const std::array<int, 2> grid_size,
+               const std::array<int, 2> window_size, const int cell_size,
+               const std::array<u_int8_t, 4> cell_color);
 
-int main()
-{
-  int window_size[2] = {640, 800};
-  const char *window_title = "Tetris";
+template <size_t W, size_t H>
+void fill_grid_container(std::array<std::array<bool, W>, H> &grid_container,
+                         const std::vector<std::vector<bool>> &shape,
+                         const std::array<int, 2> shape_pos_grid);
 
-  InitWindow(window_size[SIZE::W], window_size[SIZE::H], window_title);
+void enroll_shape_queue(
+    std::array<std::vector<std::vector<bool>>, 2> &shape_queue,
+    const std::vector<std::vector<std::vector<bool>>> &shapes);
+
+int main() {
+  std::array<int, 2> window_size = {640, 800};
+  std::string window_title = "Tetris";
+
+  InitWindow(window_size[SIZE::W], window_size[SIZE::H], window_title.c_str());
   SetTargetFPS(60);
 
   run(window_size);
@@ -42,125 +59,211 @@ int main()
   return 0;
 }
 
-void run(const int window_size[2])
-{
-  const std::vector<std::vector<std::vector<bool>>> shapes = {I, J, L, O, S, T, Z};
-  // apply random color 
-  constexpr u_int8_t shape_color[4] = {200, 0, 0, 255}; // red
+void run(const std::array<int, 2> window_size) {
+  const std::vector<std::vector<std::vector<bool>>> shapes = {I, J, L, O,
+                                                              S, T, Z};
+  // apply random color
+  constexpr std::array<u_int8_t, 4> shape_color_rgba = {200, 0, 0, 255};  // red
 
   // grid width and height
-  constexpr int grid_size[2] = {20, 40};
+  constexpr std::array<int, 2> grid_size = {20, 40};
+
+  std::array<std::array<bool, grid_size[SIZE::W]>, grid_size[SIZE::H]>
+      grid_container = {};
+
+  const int cell_size_px = 20;
+  const std::array<u_int8_t, 4> cell_color_rgba = {100, 200, 150, 255};
 
   // shape spawn area width from the top of screen
-  constexpr int spawn_area_range[2] = {5, 15};
+  constexpr std::array<int, 2> spawn_area_range = {5, 15};
 
   // get first and second shape
-  const auto shape = shapes.at(GetRandomValue(0, shapes.size() - 1)); // example
+  std::array<std::vector<std::vector<bool>>, 2> shape_queue = {
+      shapes.at(GetRandomValue(0, shapes.size() - 1)),
+      shapes.at(GetRandomValue(0, shapes.size() - 1)),
+  };
 
   // shape size in grid size
-  const int shape_size_grid[2] = {
-      1, // width
-      1, // height
+  const std::array<int, 2> shape_size_grid = {
+      1,  // width
+      1,  // height
   };
 
   // shape position in grid size
-  int shape_pos_grid[2] = {
+  std::array<int, 2> shape_pos_grid = {
       GetRandomValue(spawn_area_range[0], spawn_area_range[1]),
       // -static_cast<int>(shape.size()), // y
       0,
   };
 
-  float move_interval_seconds = 0.4f;
+  float move_interval_seconds = 0.1f;
   float accumulated_time_seconds = 0.0f;
 
   ACTION action = ACTION::NONE;
 
   // game loop
-  while (!WindowShouldClose())
-  {
-    if (IsKeyPressed(KEY_A) || IsKeyPressed(KEY_LEFT)) action = ACTION::MOVE_LEFT;
-    if (IsKeyPressed(KEY_S) || IsKeyPressed(KEY_DOWN)) action = ACTION::MOVE_DOWN;
-    if (IsKeyPressed(KEY_D) || IsKeyPressed(KEY_RIGHT)) action = ACTION::MOVE_RIGHT;
+  while (!WindowShouldClose()) {
+    if (IsKeyPressed(KEY_A) || IsKeyPressed(KEY_LEFT))
+      action = ACTION::MOVE_LEFT;
+    if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN)) action = ACTION::MOVE_DOWN;
+    if (IsKeyPressed(KEY_D) || IsKeyPressed(KEY_RIGHT))
+      action = ACTION::MOVE_RIGHT;
     if (IsKeyPressed(KEY_SPACE)) action = ACTION::FREE_FALL;
 
-    BeginDrawing();
     // get delta time if already one second then apply offset - 1 on y axis
 
     const float delta_time_seconds = GetFrameTime();
     accumulated_time_seconds += delta_time_seconds;
 
-    ClearBackground(BLACK);
-
     // main moving
-    if (accumulated_time_seconds >= move_interval_seconds)
-    {
+    if (accumulated_time_seconds >= move_interval_seconds) {
       accumulated_time_seconds = 0.f;
       shape_pos_grid[POS::Y] += 1;
     }
 
-    switch (action)
-    {
-    case ACTION::MOVE_LEFT:
-      shape_pos_grid[POS::X] -= 1;
-      break;
-    case ACTION::MOVE_RIGHT:
-      shape_pos_grid[POS::X] += 1;
-      break;
-    case ACTION::MOVE_DOWN:
-      shape_pos_grid[POS::Y] += 1;
-      break;
-    default:
-      break;
+    auto shape = shape_queue[0];
+
+    switch (action) {
+      case ACTION::MOVE_LEFT:
+        shape_pos_grid[POS::X] -= 1;
+        break;
+      case ACTION::MOVE_RIGHT:
+        shape_pos_grid[POS::X] += 1;
+        break;
+      case ACTION::MOVE_DOWN:
+        if (shape_pos_grid[POS::Y] + shape.size() >= grid_size[SIZE::H]) {
+          break;
+        }
+        shape_pos_grid[POS::Y] += 1;
+        break;
+      case ACTION::FREE_FALL:
+        // do something here
+        break;
+      default:
+        break;
     }
 
+    action = ACTION::NONE;
 
-    //
-    // if already on bottom then use second shape and pick new shape for the third one
-    //
-    // std::cout << shape_pos_grid[POS::X] << " - " << shape_pos_grid[POS::Y] << " - " << shape_size_grid[SIZE::W] << " - " << shape_size_grid[SIZE::H] << " - " << delta_time_seconds << " - " << accumulated_time_seconds << std::endl;
+    // if already on bottom then use second shape and pick new shape for the
+    // third one
 
-    draw_shape(shape, shape_pos_grid[POS::X], shape_pos_grid[POS::Y], shape_size_grid[SIZE::W], shape_size_grid[SIZE::H], shape_color, grid_size, window_size);
+    BeginDrawing();
+    ClearBackground(BLACK);
+
+    // check if the shape was on the bottom
+    // find the max height and check against the bottom position
+    // int test_y = static_cast<float>(shape_pos_grid[POS::Y] + shape.size() -
+    // 1) /
+    //              grid_size[SIZE::H] * window_size[SIZE::H];
+
+    // DrawRectangle(10, test_y, 20, 20, BLUE);
+
+
+    if (shape_pos_grid[POS::Y] + shape.size() - 1 >= grid_size[SIZE::H]) {
+      std::cout << "fill the grid" << std::endl;
+
+      fill_grid_container<grid_size[SIZE::W], grid_size[SIZE::H]>(
+          grid_container, shape, shape_pos_grid);
+
+      shape_pos_grid[POS::Y] = 0;
+
+      enroll_shape_queue(shape_queue, shapes);
+    }
+    // check if the shape was on top of another shape
+    // find the x axis position of the shape and then check on the grid
+    // container for that axis if containing any occupied block there
+
+    // std::cout << shape_pos_grid[POS::X] << " - " << shape_pos_grid[POS::Y] <<
+    // " - " << shape_size_grid[SIZE::W] << " - " << shape_size_grid[SIZE::H] <<
+    // " - " << delta_time_seconds << " - " << accumulated_time_seconds <<
+    // std::endl;
+    draw_shape(shape, shape_pos_grid[POS::X], shape_pos_grid[POS::Y],
+               shape_size_grid[SIZE::W], shape_size_grid[SIZE::H],
+               shape_color_rgba, grid_size, window_size, cell_size_px);
+
+    draw_grid<grid_size[SIZE::W], grid_size[SIZE::H]>(
+        grid_container, grid_size, window_size, cell_size_px, cell_color_rgba);
 
     EndDrawing();
-
-    action = ACTION::NONE;
   }
 }
 
-void draw_shape(const std::vector<std::vector<bool>> &shape, int x, int y, const int width, const int height, const u_int8_t color[4], const int grid_size[2], const int window_size[2])
-{
-  Color c{color[0], color[1], color[2], color[3]};
+void enroll_shape_queue(
+    std::array<std::vector<std::vector<bool>>, 2> &shape_queue,
+    const std::vector<std::vector<std::vector<bool>>> &shapes) {
+  shape_queue[0] = shape_queue[1];
+  shape_queue[1] = shapes.at(GetRandomValue(0, shapes.size() - 1));
+}
 
-  for (const auto &row : shape)
-  {
-    int temp_x = x;
+template <size_t W, size_t H>
+void fill_grid_container(std::array<std::array<bool, W>, H> &grid_container,
+                         const std::vector<std::vector<bool>> &shape,
+                         const std::array<int, 2> shape_pos_grid) {
+  int y = shape_pos_grid[POS::Y];
 
-    for (const auto &column : row)
-    {
+  for (const auto &row : shape) {
+    int temp_x = shape_pos_grid[POS::X];
+
+    for (auto column : row) {
       int col_x = temp_x++;
 
-      if (!column)
-      {
+      if (!column) {
         continue;
       }
+      std::cout << "x : " << col_x << std::endl;
+      std::cout << "y : " << y << std::endl;
 
-      // std::cout
-      //     << "X"
-      //     << static_cast<float>(col_x) / grid_size[SIZE::W] * window_size[SIZE::W]
-      //     << "Y"
-      //     << static_cast<float>(y) / grid_size[SIZE::H] * window_size[SIZE::H]
-      //     << "W"
-      //     << static_cast<float>(width) / grid_size[SIZE::W] * window_size[SIZE::W]
-      //     << "H"
-      //     << static_cast<float>(height) / grid_size[SIZE::H] * window_size[SIZE::H]
-      //     << std::endl;
+      // grid_container.at(y - 1).at(col_x - 1) = column;
+      grid_container.at(y - 1).at(col_x) = column;
+    }
+
+    y++;
+  }
+}
+
+template <size_t W, size_t H>
+void draw_grid(const std::array<std::array<bool, W>, H> &grid_container,
+               const std::array<int, 2> grid_size,
+               const std::array<int, 2> window_size, const int cell_size_px,
+               const std::array<u_int8_t, 4> cell_color) {
+  Color c = {cell_color[0], cell_color[1], cell_color[2], cell_color[3]};
+
+  for (size_t i = 0; i < grid_container.size(); i++) {
+    for (size_t j = 0; j < grid_container.at(i).size(); j++) {
+      if (grid_container[i][j]) {
+        // std::cout << j << " - " << i << std::endl;
+
+        DrawRectangle(
+            static_cast<float>(j) / grid_size[SIZE::W] * window_size[SIZE::W],
+            static_cast<float>(i) / grid_size[SIZE::H] * window_size[SIZE::H],
+            cell_size_px, cell_size_px, c);
+      }
+    }
+  }
+}
+
+void draw_shape(const std::vector<std::vector<bool>> &shape, int x, int y,
+                const int width, const int height,
+                const std::array<u_int8_t, 4> color,
+                const std::array<int, 2> grid_size,
+                const std::array<int, 2> window_size, const int cell_size_px) {
+  Color c{color[0], color[1], color[2], color[3]};
+
+  for (const auto &row : shape) {
+    int temp_x = x;
+
+    for (const auto &column : row) {
+      int col_x = temp_x++;
+
+      if (!column) {
+        continue;
+      }
 
       DrawRectangle(
           static_cast<float>(col_x) / grid_size[SIZE::W] * window_size[SIZE::W],
           static_cast<float>(y) / grid_size[SIZE::H] * window_size[SIZE::H],
-          static_cast<float>(width) / grid_size[SIZE::W] * window_size[SIZE::W],
-          static_cast<float>(height) / grid_size[SIZE::H] * window_size[SIZE::H],
-          c);
+          cell_size_px, cell_size_px, c);
     }
 
     y++;
