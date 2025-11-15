@@ -51,6 +51,14 @@ bool is_on_top_of_another_shape(
     const std::vector<std::vector<bool>> &shape,
     const std::array<int, 2> shape_pos_grid);
 
+template <size_t W, size_t H>
+bool is_touched_on_the_next_x_axis(
+    const std::array<std::array<bool, W>, H> &grid_container,
+    const std::vector<std::vector<bool>> &shape,
+    const std::array<int, 2> shape_pos_grid,
+    const int offset_x // -1 (left) or 1 (right)
+);
+
 int main() {
   std::array<int, 2> window_size = {640, 800};
   std::string window_title = "Tetris";
@@ -129,14 +137,29 @@ void run(const std::array<int, 2> window_size) {
     auto shape = shape_queue[0];
 
     switch (action) {
-      case ACTION::MOVE_LEFT:
+      case ACTION::MOVE_LEFT: {
+        bool is_full_to_the_left = shape_pos_grid[POS::X] <= 0;
+        if (is_full_to_the_left ||
+            is_touched_on_the_next_x_axis(grid_container, shape, shape_pos_grid,
+                                          -1)) {
+          break;
+        }
         shape_pos_grid[POS::X] -= 1;
         break;
-      case ACTION::MOVE_RIGHT:
+      }
+      case ACTION::MOVE_RIGHT: {
+        bool is_full_to_the_right =
+            shape_pos_grid[POS::X] + shape.at(0).size() >= grid_size[SIZE::W];
+        if (is_full_to_the_right ||
+            is_touched_on_the_next_x_axis(grid_container, shape, shape_pos_grid,
+                                          1)) {
+          break;
+        }
         shape_pos_grid[POS::X] += 1;
         break;
+      }
       case ACTION::MOVE_DOWN:
-        if (shape_pos_grid[POS::Y] + shape.size() >= grid_size[SIZE::H]) {
+        if (shape_pos_grid[POS::Y] + shape.size() - 1 >= grid_size[SIZE::H]) {
           break;
         }
         shape_pos_grid[POS::Y] += 1;
@@ -158,9 +181,11 @@ void run(const std::array<int, 2> window_size) {
       fill_grid_container(grid_container, shape, shape_pos_grid);
 
       shape_pos_grid[POS::Y] = 0;
+      shape_pos_grid[POS::X] =
+          GetRandomValue(spawn_area_range[0], spawn_area_range[1]),
 
       // use the next shape
-      enroll_shape_queue(shape_queue, shapes);
+          enroll_shape_queue(shape_queue, shapes);
     }
 
     // render
@@ -186,6 +211,34 @@ void enroll_shape_queue(
 }
 
 template <size_t W, size_t H>
+bool is_touched_on_the_next_x_axis(
+    const std::array<std::array<bool, W>, H> &grid_container,
+    const std::vector<std::vector<bool>> &shape,
+    const std::array<int, 2> shape_pos_grid,
+    const int offset_x  // -1 (left) or 1 (right)
+) {
+  int y = shape_pos_grid[POS::Y];
+
+  for (const auto &row : shape) {
+    int x = shape_pos_grid[POS::X];
+
+    for (const auto &col : row) {
+      int col_x = x++;
+      if (!col) {
+        continue;
+      }
+
+      if (grid_container.at(y).at(col_x + offset_x)) {
+        return true;
+      }
+    }
+
+    y++;
+  }
+  return false;
+}
+
+template <size_t W, size_t H>
 bool is_on_top_of_another_shape(
     const std::array<std::array<bool, W>, H> &grid_container,
     const std::vector<std::vector<bool>> &shape,
@@ -202,7 +255,7 @@ bool is_on_top_of_another_shape(
       }
 
       if (grid_container.at(y).at(col_x)) {
-        return true; 
+        return true;
       }
     }
 
@@ -226,10 +279,6 @@ void fill_grid_container(std::array<std::array<bool, W>, H> &grid_container,
       if (!column) {
         continue;
       }
-      std::cout << "x : " << col_x << std::endl;
-      std::cout << "y : " << y << std::endl;
-
-      // grid_container.at(y - 1).at(col_x - 1) = column;
       grid_container.at(y - 1).at(col_x) = column;
     }
 
