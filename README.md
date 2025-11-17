@@ -1,5 +1,9 @@
 # Tetris
 
+I tried to create Tetris using C++ and Raylib. 
+
+> 100% code written by me. No AI Code-Completion/Generation is used while making this project.
+
 ## TODO
 
 - Shape Rotation
