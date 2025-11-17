@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 
-#include "shapes.h"
+#include "shapes.hpp"
 
 enum POS {
   X,
@@ -101,8 +101,8 @@ void run(const std::array<int, 2> window_size) {
   // shape spawn area width from the top of screen
   constexpr std::array<int, 2> spawn_area_range = {5, 15};
 
-  const std::vector<std::vector<std::vector<bool>>> shapes = {I, J, L, O,
-                                                              S, T, Z};
+  const std::vector<std::vector<std::vector<bool>>> shapes = {
+      shape::I, shape::J, shape::L, shape::O, shape::S, shape::T, shape::Z};
 
   // apply random color
   constexpr std::array<u_int8_t, 4> shape_color_rgba = {200, 100, 0,

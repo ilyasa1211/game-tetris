@@ -8,7 +8,7 @@ ARG USER_GID=1000
 ARG OLD_USERNAME=ubuntu
 
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-  sudo curl lsb-release software-properties-common gnupg cmake git \
+  sudo curl lsb-release software-properties-common gnupg cmake git ninja-build \
   # Raylib requirements
   libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev \
   libglu1-mesa-dev libxcursor-dev libxinerama-dev libwayland-dev libxkbcommon-dev
