@@ -10,7 +10,7 @@ std::vector<std::vector<T>> transpose(std::vector<std::vector<T>> src) {
   int row = src.size();
   int col = src.at(0).size();
 
-  std::vector<std::vector<T>> out(row, std::vector<T>(col));
+  std::vector<std::vector<T>> out(col, std::vector<T>(row));
 
   for (size_t i = 0; i < row; i++) {
     for (size_t j = 0; j < col; j++) {

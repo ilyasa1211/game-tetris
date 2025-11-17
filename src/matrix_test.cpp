@@ -24,7 +24,32 @@ TEST(SimpleTest, TransposeSameSide) {
     for (size_t j = 0; j < source.at(0).size(); j++) {
       int a = output[i][j];
       int b = expected[i][j];
+
       EXPECT_EQ(a, b);
     }
   }
 }
+TEST(SimpleTest, TransposeDifferentSide) {
+  std::vector<std::vector<int>> source = {
+      {1, 2, 3},
+      {4, 5, 6},
+  };
+
+  std::vector<std::vector<int>> expected = {
+      {1, 4},
+      {2, 5},
+      {3, 6},
+  };
+
+  std::vector<std::vector<int>> output = matrix::transpose(source);
+
+  for (size_t i = 0; i < source.size(); i++) {
+    for (size_t j = 0; j < source.at(0).size(); j++) {
+      int a = output[i][j];
+      int b = expected[i][j];
+
+      EXPECT_EQ(a, b);
+    }
+  }
+}
+
