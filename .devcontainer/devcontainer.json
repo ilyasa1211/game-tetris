@@ -16,7 +16,7 @@
 	// "forwardPorts": [],
 
 	// Uncomment the next line to run commands after the container is created.
-	"postCreateCommand": "sudo chown -R dev:dev /workspaces",
+	// "postCreateCommand": "sudo chown -R dev:dev /workspaces",
 
 	// Configure tool-specific properties.
 	// "customizations": {},
