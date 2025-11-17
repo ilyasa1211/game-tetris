@@ -10,7 +10,7 @@ I tried to create Tetris using C++ and Raylib.
 - Multi Color (Optional)
 - Sounds
 - Scores
-- Press Space to insta-place
+- Placeholder on instaplace
 - Web Support (WASM)
 - Add Game Over
 - GitHub Action auto release & deploy

@@ -67,10 +67,11 @@ void erase_row(std::array<std::array<bool, W>, H> &grid_container,
 template <size_t W, size_t H>
 void shift_down_floating_rows(
     std::array<std::array<bool, W>, H> &grid_container);
-template <size_t W, size_t H>
-void shift_down_rows(std::array<std::array<bool, W>, H> &grid_container,
-                     const int start_row, const int offset);
 
+template <size_t W, size_t H>
+int get_distance_on_placed(std::array<std::array<bool, W>, H> &grid_container,
+                           const std::vector<std::vector<bool>> &shape,
+                           const std::array<int, 2> &shape_pos_grid);
 int main() {
   std::array<int, 2> window_size = {640, 800};
   std::string window_title = "Tetris";
@@ -123,7 +124,7 @@ void run(const std::array<int, 2> window_size) {
       0,
   };
 
-  float move_interval_seconds = 0.1f;
+  float move_interval_seconds = 0.5f;
   float accumulated_time_seconds = 0.0f;
 
   ACTION action = ACTION::NONE;
@@ -176,9 +177,10 @@ void run(const std::array<int, 2> window_size) {
         }
         shape_pos_grid[POS::Y] += 1;
         break;
-      case ACTION::FREE_FALL:
-        // do something here
+      case ACTION::FREE_FALL: {
+        shape_pos_grid[POS::Y] += get_distance_on_placed(grid_container, shape, shape_pos_grid);
         break;
+      }
       default:
         break;
     }
@@ -248,6 +250,45 @@ void erase_row(std::array<std::array<bool, W>, H> &grid_container,
   for (auto &&i : grid_container.at(row)) {
     i = 0;
   }
+}
+
+// measures how much distance on y-axis until it reach the bottom or on top of
+// another shape.
+template <size_t W, size_t H>
+int get_distance_on_placed(std::array<std::array<bool, W>, H> &grid_container,
+                           const std::vector<std::vector<bool>> &shape,
+                           const std::array<int, 2> &shape_pos_grid) {
+  const int x = shape_pos_grid[POS::X];
+  const int y = shape_pos_grid[POS::Y];
+
+  int least_distance = grid_container.size() - 1;
+
+  for (size_t i = 0; i < shape.at(0).size(); i++) {
+    int offset = 0;
+
+    for (int j = shape.size() - 1; j >= 0; j--) {
+      if (!shape.at(j).at(i)) {
+        offset++;
+        continue;
+      }
+
+      for (size_t n = y + j; n < grid_container.size() - 1; n++) {
+        if (grid_container.at(n + 1).at(x + i)) {
+          break;
+        }
+
+        offset++;
+      }
+
+      break;
+    }
+
+    if (offset < least_distance) {
+      least_distance = offset;
+    }
+  }
+
+  return least_distance;
 }
 
 template <size_t W, size_t H>
