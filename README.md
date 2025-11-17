@@ -9,7 +9,7 @@ I tried to create Tetris using C++ and Raylib.
 - Shape Rotation
 - Multi Color (Optional)
 - Sounds
-- Scores
+- Show Scores
 - Placeholder on instaplace
 - Web Support (WASM)
 - Add Game Over

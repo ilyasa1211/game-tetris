@@ -72,6 +72,9 @@ template <size_t W, size_t H>
 int get_distance_on_placed(std::array<std::array<bool, W>, H> &grid_container,
                            const std::vector<std::vector<bool>> &shape,
                            const std::array<int, 2> &shape_pos_grid);
+
+void listen_input(ACTION &action);
+
 int main() {
   std::array<int, 2> window_size = {640, 800};
   std::string window_title = "Tetris";
@@ -129,15 +132,12 @@ void run(const std::array<int, 2> window_size) {
 
   ACTION action = ACTION::NONE;
 
+  int scores = 0;
+  constexpr int score_multiplier = 10;
+
   // game loop
   while (!WindowShouldClose()) {
-    if (IsKeyPressed(KEY_A) || IsKeyPressed(KEY_LEFT))
-      action = ACTION::MOVE_LEFT;
-    if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN)) action = ACTION::MOVE_DOWN;
-    if (IsKeyPressed(KEY_D) || IsKeyPressed(KEY_RIGHT))
-      action = ACTION::MOVE_RIGHT;
-    if (IsKeyPressed(KEY_SPACE)) action = ACTION::FREE_FALL;
-
+    listen_input(action);
     // get delta time if already passed interval limit then apply offset + 1 on
     // y axis
     const float delta_time_seconds = GetFrameTime();
@@ -178,7 +178,8 @@ void run(const std::array<int, 2> window_size) {
         shape_pos_grid[POS::Y] += 1;
         break;
       case ACTION::FREE_FALL: {
-        shape_pos_grid[POS::Y] += get_distance_on_placed(grid_container, shape, shape_pos_grid);
+        shape_pos_grid[POS::Y] +=
+            get_distance_on_placed(grid_container, shape, shape_pos_grid);
         break;
       }
       default:
@@ -196,13 +197,18 @@ void run(const std::array<int, 2> window_size) {
 
       shape_pos_grid[POS::Y] = 0;
       shape_pos_grid[POS::X] =
-          GetRandomValue(spawn_area_range[0], spawn_area_range[1]),
+          GetRandomValue(spawn_area_range[0], spawn_area_range[1]);
 
       // use the next shape
-          enroll_shape_queue(shape_queue, shapes);
+      enroll_shape_queue(shape_queue, shapes);
     }
 
-    if (erase_completed_rows(grid_container) > 0) {
+    int rows_affected = erase_completed_rows(grid_container);
+
+    if (rows_affected > 0) {
+      scores += rows_affected * score_multiplier;
+      std::cout << "Current scores: " << scores << std::endl;
+
       shift_down_floating_rows(grid_container);
     }
 
@@ -219,6 +225,14 @@ void run(const std::array<int, 2> window_size) {
 
     EndDrawing();
   }
+}
+
+void listen_input(ACTION &action) {
+  if (IsKeyPressed(KEY_A) || IsKeyPressed(KEY_LEFT)) action = ACTION::MOVE_LEFT;
+  if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN)) action = ACTION::MOVE_DOWN;
+  if (IsKeyPressed(KEY_D) || IsKeyPressed(KEY_RIGHT))
+    action = ACTION::MOVE_RIGHT;
+  if (IsKeyPressed(KEY_SPACE)) action = ACTION::FREE_FALL;
 }
 
 // returns how many rows that are erased
@@ -406,8 +420,6 @@ void draw_grid(const std::array<std::array<bool, W>, H> &grid_container,
   for (size_t i = 0; i < grid_container.size(); i++) {
     for (size_t j = 0; j < grid_container.at(i).size(); j++) {
       if (grid_container[i][j]) {
-        // std::cout << j << " - " << i << std::endl;
-
         DrawRectangle(
             static_cast<float>(j) / grid_size[SIZE::W] * window_size[SIZE::W],
             static_cast<float>(i) / grid_size[SIZE::H] * window_size[SIZE::H],
