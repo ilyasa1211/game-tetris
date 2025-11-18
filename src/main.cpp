@@ -31,13 +31,10 @@ void run(const std::array<int, 2> window_size);
 void draw_shape(const std::vector<std::vector<bool>> &shape, int x, int y,
                 const int width, const int height,
                 const std::array<u_int8_t, 4> color,
-                const std::array<int, 2> grid_size,
-                const std::array<int, 2> window_size, const int cell_size_px);
+                const int cell_size_px);
 template <size_t W, size_t H>
 void draw_grid(const std::array<std::array<bool, W>, H> &grid_container,
-               const std::array<int, 2> grid_size,
-               const std::array<int, 2> window_size, const int cell_size,
-               const std::array<u_int8_t, 4> cell_color);
+               const int cell_size, const std::array<u_int8_t, 4> cell_color);
 
 template <size_t W, size_t H>
 void fill_grid_container(std::array<std::array<bool, W>, H> &grid_container,
@@ -251,10 +248,9 @@ void run(const std::array<int, 2> window_size) {
 
     draw_shape(*shape, shape_pos_grid[POS::X], shape_pos_grid[POS::Y],
                shape_size_grid[SIZE::W], shape_size_grid[SIZE::H],
-               shape_color_rgba, grid_size, window_size, cell_size_px);
+               shape_color_rgba, cell_size_px);
 
-    draw_grid(grid_container, grid_size, window_size, cell_size_px,
-              cell_color_rgba);
+    draw_grid(grid_container, cell_size_px, cell_color_rgba);
 
     std::string score_text = "Scores: " + std::to_string(scores);
     std::string time_played_text =
@@ -466,18 +462,16 @@ void fill_grid_container(std::array<std::array<bool, W>, H> &grid_container,
 
 template <size_t W, size_t H>
 void draw_grid(const std::array<std::array<bool, W>, H> &grid_container,
-               const std::array<int, 2> grid_size,
-               const std::array<int, 2> window_size, const int cell_size_px,
+               const int cell_size_px,
                const std::array<u_int8_t, 4> cell_color) {
   Color c = {cell_color[0], cell_color[1], cell_color[2], cell_color[3]};
 
   for (size_t i = 0; i < grid_container.size(); i++) {
     for (size_t j = 0; j < grid_container.at(i).size(); j++) {
       if (grid_container[i][j]) {
-        DrawRectangle(
-            static_cast<float>(j) / grid_size[SIZE::W] * window_size[SIZE::W],
-            static_cast<float>(i) / grid_size[SIZE::H] * window_size[SIZE::H],
-            cell_size_px, cell_size_px, c);
+        DrawRectangle(static_cast<float>(j) * cell_size_px,
+                      static_cast<float>(i) * cell_size_px, cell_size_px,
+                      cell_size_px, c);
       }
     }
   }
@@ -485,9 +479,7 @@ void draw_grid(const std::array<std::array<bool, W>, H> &grid_container,
 
 void draw_shape(const std::vector<std::vector<bool>> &shape, int x, int y,
                 const int width, const int height,
-                const std::array<u_int8_t, 4> color,
-                const std::array<int, 2> grid_size,
-                const std::array<int, 2> window_size, const int cell_size_px) {
+                const std::array<u_int8_t, 4> color, const int cell_size_px) {
   Color c{color[0], color[1], color[2], color[3]};
 
   for (const auto &row : shape) {
@@ -500,10 +492,9 @@ void draw_shape(const std::vector<std::vector<bool>> &shape, int x, int y,
         continue;
       }
 
-      DrawRectangle(
-          static_cast<float>(col_x) / grid_size[SIZE::W] * window_size[SIZE::W],
-          static_cast<float>(y) / grid_size[SIZE::H] * window_size[SIZE::H],
-          cell_size_px, cell_size_px, c);
+      DrawRectangle(static_cast<float>(col_x) * cell_size_px,
+                    static_cast<float>(y) * cell_size_px, cell_size_px,
+                    cell_size_px, c);
     }
 
     y++;
