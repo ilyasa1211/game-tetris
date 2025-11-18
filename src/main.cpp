@@ -30,8 +30,7 @@ enum ACTION {
 void run(const std::array<int, 2> window_size);
 void draw_shape(const std::vector<std::vector<bool>> &shape, int x, int y,
                 const int width, const int height,
-                const std::array<u_int8_t, 4> color,
-                const int cell_size_px);
+                const std::array<u_int8_t, 4> color, const int cell_size_px);
 template <size_t W, size_t H>
 void draw_grid(const std::array<std::array<bool, W>, H> &grid_container,
                const int cell_size, const std::array<u_int8_t, 4> cell_color);
@@ -83,8 +82,14 @@ template <typename T>
 std::vector<std::vector<T>> rotate_shape_counterclockwise(
     const std::vector<std::vector<T>> &shape);
 
+template <typename T>
+void draw_placeholder(const std::array<T, 2> placeholder_pos_grid,
+                      const std::vector<std::vector<bool>> &shape,
+                      const int cell_size_px,
+                      const std::array<u_int8_t, 4> outline_color);
+
 int main() {
-  std::array<int, 2> window_size = {640, 800};
+  std::array<int, 2> window_size = {400, 800};
   std::string window_title = "Tetris";
 
   InitWindow(window_size[SIZE::W], window_size[SIZE::H], window_title.c_str());
@@ -105,6 +110,8 @@ void run(const std::array<int, 2> window_size) {
       grid_container = {};
   const int cell_size_px = 20;
   const std::array<u_int8_t, 4> cell_color_rgba = {100, 200, 150, 255};
+
+  const std::array<u_int8_t, 4> placeholder_color_rgba = {200, 200, 150, 255};
 
   // shape spawn area width from the top of screen
   constexpr std::array<int, 2> spawn_area_range = {5, 15};
@@ -170,6 +177,11 @@ void run(const std::array<int, 2> window_size) {
 
     auto shape = &shape_queue[0];
 
+    std::array<int, 2> placeholder_pos_grid = {
+        shape_pos_grid[POS::X],
+        shape_pos_grid[POS::Y] +
+            get_distance_on_placed(grid_container, *shape, shape_pos_grid)};
+
     switch (action) {
       case ACTION::MOVE_LEFT: {
         bool is_full_to_the_left = shape_pos_grid[POS::X] <= 0;
@@ -191,7 +203,7 @@ void run(const std::array<int, 2> window_size) {
           break;
         }
         shape_pos_grid[POS::X] += 1;
-        break;
+        // break;
       }
       case ACTION::MOVE_DOWN:
         if (shape_pos_grid[POS::Y] + (*shape).size() - 1 >=
@@ -201,8 +213,8 @@ void run(const std::array<int, 2> window_size) {
         shape_pos_grid[POS::Y] += 1;
         break;
       case ACTION::FREE_FALL: {
-        shape_pos_grid[POS::Y] +=
-            get_distance_on_placed(grid_container, *shape, shape_pos_grid);
+        shape_pos_grid[POS::Y] = placeholder_pos_grid[POS::Y];
+
         break;
       }
       case ACTION::ROTATE_CLOCKWISE: {
@@ -237,8 +249,6 @@ void run(const std::array<int, 2> window_size) {
 
     if (rows_affected > 0) {
       scores += rows_affected * score_multiplier;
-      std::cout << "Current scores: " << scores << std::endl;
-
       shift_down_floating_rows(grid_container);
     }
 
@@ -251,6 +261,9 @@ void run(const std::array<int, 2> window_size) {
                shape_color_rgba, cell_size_px);
 
     draw_grid(grid_container, cell_size_px, cell_color_rgba);
+
+    draw_placeholder(placeholder_pos_grid, *shape, cell_size_px,
+                     placeholder_color_rgba);
 
     std::string score_text = "Scores: " + std::to_string(scores);
     std::string time_played_text =
@@ -457,6 +470,30 @@ void fill_grid_container(std::array<std::array<bool, W>, H> &grid_container,
     }
 
     y++;
+  }
+}
+
+template <typename T>
+void draw_placeholder(const std::array<T, 2> placeholder_pos_grid,
+                      const std::vector<std::vector<bool>> &shape,
+                      const int cell_size_px,
+                      const std::array<u_int8_t, 4> outline_color) {
+  Color c{
+      outline_color[0],
+      outline_color[1],
+      outline_color[2],
+      outline_color[3],
+  };
+
+  for (size_t i = 0; i < shape.size(); i++) {
+    for (size_t j = 0; j < shape.at(0).size(); j++) {
+      if (!shape[i][j]) {
+        continue;
+      }
+      DrawRectangleLines((placeholder_pos_grid[POS::X] + j) * cell_size_px,
+                         (placeholder_pos_grid[POS::Y] + i) * cell_size_px,
+                         cell_size_px, cell_size_px, c);
+    }
   }
 }
 
