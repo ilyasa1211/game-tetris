@@ -49,7 +49,7 @@ void enroll_shape_queue(
     const std::vector<std::vector<std::vector<bool>>> &shapes);
 
 template <size_t W, size_t H>
-bool is_on_top_of_another_shape(
+bool is_on_top_of_something(
     const std::array<std::array<bool, W>, H> &grid_container,
     const std::vector<std::vector<bool>> &shape,
     const std::array<int, 2> shape_pos_grid);
@@ -139,7 +139,13 @@ void run(const std::array<int, 2> window_size) {
   };
 
   float move_interval_seconds = 0.5f;
-  float accumulated_time_seconds = 0.0f;
+  float accumulated_time_seconds = 0.f;
+
+  // auto earn score every x seconds
+  float auto_score_interval_seconds = 3.f;  // 3 seconds
+  float accumulated_auto_score_seconds = 0.f;
+
+  float time_played_seconds = 0.f;
 
   ACTION action = ACTION::NONE;
 
@@ -157,6 +163,13 @@ void run(const std::array<int, 2> window_size) {
       accumulated_time_seconds = 0.f;
       shape_pos_grid[POS::Y] += 1;
     }
+
+    accumulated_auto_score_seconds += delta_time_seconds;
+    if (accumulated_auto_score_seconds >= auto_score_interval_seconds) {
+      accumulated_auto_score_seconds = 0.f;
+      scores += score_multiplier;
+    }
+    time_played_seconds += delta_time_seconds;
 
     auto shape = &shape_queue[0];
 
@@ -209,11 +222,10 @@ void run(const std::array<int, 2> window_size) {
 
     action = ACTION::NONE;
 
-    const bool on_bottom =
-        shape_pos_grid[POS::Y] + (*shape).size() - 1 >= grid_size[SIZE::H];
+    // const bool on_bottom =
+    //     shape_pos_grid[POS::Y] + (*shape).size() - 1 >= grid_size[SIZE::H];
 
-    if (on_bottom ||
-        is_on_top_of_another_shape(grid_container, *shape, shape_pos_grid)) {
+    if (is_on_top_of_something(grid_container, *shape, shape_pos_grid)) {
       fill_grid_container(grid_container, *shape, shape_pos_grid);
 
       shape_pos_grid[POS::Y] = 0;
@@ -243,6 +255,14 @@ void run(const std::array<int, 2> window_size) {
 
     draw_grid(grid_container, grid_size, window_size, cell_size_px,
               cell_color_rgba);
+
+    std::string score_text = "Scores: " + std::to_string(scores);
+    std::string time_played_text =
+        "Time played: " +
+        std::to_string(static_cast<int>(time_played_seconds)) + " seconds";
+
+    DrawText(score_text.c_str(), 0, 0, 40, WHITE);
+    DrawText(time_played_text.c_str(), 0, 40, 20, WHITE);
 
     EndDrawing();
   }
@@ -357,7 +377,7 @@ void shift_down_floating_rows(
       }
 
       grid_container.at(row + offset).at(col) = *val;
-      *val = false;
+      *val = 0;
     }
   }
 }
@@ -377,49 +397,48 @@ bool is_touched_on_the_next_x_axis(
     const int offset_x  // -1 (left) or 1 (right)
 ) {
   int y = shape_pos_grid[POS::Y];
+  int x = shape_pos_grid[POS::X];
 
-  for (const auto &row : shape) {
-    int x = shape_pos_grid[POS::X];
-
-    for (const auto &col : row) {
-      int col_x = x++;
-      if (!col) {
+  for (size_t i = 0; i < shape.size(); i++) {
+    for (size_t j = 0; j < shape.at(0).size(); j++) {
+      if (!shape[i][j]) {
         continue;
       }
 
-      if (grid_container.at(y).at(col_x + offset_x)) {
+      if (grid_container.at(y + i).at(x + j + offset_x)) {
         return true;
       }
     }
-
-    y++;
   }
+
   return false;
 }
 
 template <size_t W, size_t H>
-bool is_on_top_of_another_shape(
+bool is_on_top_of_something(
     const std::array<std::array<bool, W>, H> &grid_container,
     const std::vector<std::vector<bool>> &shape,
     const std::array<int, 2> shape_pos_grid) {
   int y = shape_pos_grid[POS::Y];
+  int x = shape_pos_grid[POS::X];
 
-  for (const auto &row : shape) {
-    int x = shape_pos_grid[POS::X];
-
-    for (const auto &col : row) {
-      int col_x = x++;
-      if (!col) {
+  for (size_t i = 0; i < shape.size(); i++) {
+    for (size_t j = 0; j < shape.at(0).size(); j++) {
+      if (!shape[i][j]) {
         continue;
       }
 
-      if (grid_container.at(y).at(col_x)) {
+      // is on bottom
+      if (y + i >= grid_container.size()) {
+        return true;
+      }
+
+      if (grid_container.at(y + i).at(x + j)) {
         return true;
       }
     }
-
-    y++;
   }
+
   return false;
 }
 
