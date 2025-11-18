@@ -15,10 +15,8 @@ I tried to create Tetris using C++ and Raylib.
 
 ## TODO
 
-- Shape Rotation
 - Multi Color (Optional)
 - Sounds
-- Show Scores
 - Placeholder on instaplace
 - Web Support (WASM)
 - Add Game Over
