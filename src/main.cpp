@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 
+#include "matrix.hpp"
 #include "shapes.hpp"
 
 enum POS {
@@ -21,6 +22,8 @@ enum ACTION {
   MOVE_RIGHT,
   MOVE_LEFT,
   MOVE_DOWN,
+  ROTATE_CLOCKWISE,
+  ROTATE_COUNTERCLOCKWISE,
   FREE_FALL,
 };
 
@@ -74,6 +77,14 @@ int get_distance_on_placed(std::array<std::array<bool, W>, H> &grid_container,
                            const std::array<int, 2> &shape_pos_grid);
 
 void listen_input(ACTION &action);
+
+template <typename T>
+std::vector<std::vector<T>> rotate_shape_clockwise(
+    const std::vector<std::vector<T>> &shape);
+
+template <typename T>
+std::vector<std::vector<T>> rotate_shape_counterclockwise(
+    const std::vector<std::vector<T>> &shape);
 
 int main() {
   std::array<int, 2> window_size = {640, 800};
@@ -147,14 +158,14 @@ void run(const std::array<int, 2> window_size) {
       shape_pos_grid[POS::Y] += 1;
     }
 
-    auto shape = shape_queue[0];
+    auto shape = &shape_queue[0];
 
     switch (action) {
       case ACTION::MOVE_LEFT: {
         bool is_full_to_the_left = shape_pos_grid[POS::X] <= 0;
         if (is_full_to_the_left ||
-            is_touched_on_the_next_x_axis(grid_container, shape, shape_pos_grid,
-                                          -1)) {
+            is_touched_on_the_next_x_axis(grid_container, *shape,
+                                          shape_pos_grid, -1)) {
           break;
         }
         shape_pos_grid[POS::X] -= 1;
@@ -162,24 +173,34 @@ void run(const std::array<int, 2> window_size) {
       }
       case ACTION::MOVE_RIGHT: {
         bool is_full_to_the_right =
-            shape_pos_grid[POS::X] + shape.at(0).size() >= grid_size[SIZE::W];
+            shape_pos_grid[POS::X] + (*shape).at(0).size() >=
+            grid_size[SIZE::W];
         if (is_full_to_the_right ||
-            is_touched_on_the_next_x_axis(grid_container, shape, shape_pos_grid,
-                                          1)) {
+            is_touched_on_the_next_x_axis(grid_container, *shape,
+                                          shape_pos_grid, 1)) {
           break;
         }
         shape_pos_grid[POS::X] += 1;
         break;
       }
       case ACTION::MOVE_DOWN:
-        if (shape_pos_grid[POS::Y] + shape.size() - 1 >= grid_size[SIZE::H]) {
+        if (shape_pos_grid[POS::Y] + (*shape).size() - 1 >=
+            grid_size[SIZE::H]) {
           break;
         }
         shape_pos_grid[POS::Y] += 1;
         break;
       case ACTION::FREE_FALL: {
         shape_pos_grid[POS::Y] +=
-            get_distance_on_placed(grid_container, shape, shape_pos_grid);
+            get_distance_on_placed(grid_container, *shape, shape_pos_grid);
+        break;
+      }
+      case ACTION::ROTATE_CLOCKWISE: {
+        *shape = rotate_shape_clockwise(*shape);
+        break;
+      }
+      case ACTION::ROTATE_COUNTERCLOCKWISE: {
+        *shape = rotate_shape_counterclockwise(*shape);
         break;
       }
       default:
@@ -189,11 +210,11 @@ void run(const std::array<int, 2> window_size) {
     action = ACTION::NONE;
 
     const bool on_bottom =
-        shape_pos_grid[POS::Y] + shape.size() - 1 >= grid_size[SIZE::H];
+        shape_pos_grid[POS::Y] + (*shape).size() - 1 >= grid_size[SIZE::H];
 
     if (on_bottom ||
-        is_on_top_of_another_shape(grid_container, shape, shape_pos_grid)) {
-      fill_grid_container(grid_container, shape, shape_pos_grid);
+        is_on_top_of_another_shape(grid_container, *shape, shape_pos_grid)) {
+      fill_grid_container(grid_container, *shape, shape_pos_grid);
 
       shape_pos_grid[POS::Y] = 0;
       shape_pos_grid[POS::X] =
@@ -216,7 +237,7 @@ void run(const std::array<int, 2> window_size) {
     BeginDrawing();
     ClearBackground(BLACK);
 
-    draw_shape(shape, shape_pos_grid[POS::X], shape_pos_grid[POS::Y],
+    draw_shape(*shape, shape_pos_grid[POS::X], shape_pos_grid[POS::Y],
                shape_size_grid[SIZE::W], shape_size_grid[SIZE::H],
                shape_color_rgba, grid_size, window_size, cell_size_px);
 
@@ -227,12 +248,26 @@ void run(const std::array<int, 2> window_size) {
   }
 }
 
+template <typename T>
+std::vector<std::vector<T>> rotate_shape_clockwise(
+    const std::vector<std::vector<T>> &shape) {
+  return matrix::reflect_vertical(matrix::transpose(shape));
+}
+
+template <typename T>
+std::vector<std::vector<T>> rotate_shape_counterclockwise(
+    const std::vector<std::vector<T>> &shape) {
+  return matrix::reflect_horizontal(matrix::transpose(shape));
+}
+
 void listen_input(ACTION &action) {
   if (IsKeyPressed(KEY_A) || IsKeyPressed(KEY_LEFT)) action = ACTION::MOVE_LEFT;
   if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN)) action = ACTION::MOVE_DOWN;
   if (IsKeyPressed(KEY_D) || IsKeyPressed(KEY_RIGHT))
     action = ACTION::MOVE_RIGHT;
   if (IsKeyPressed(KEY_SPACE)) action = ACTION::FREE_FALL;
+  if (IsKeyPressed(KEY_Q)) action = ACTION::ROTATE_CLOCKWISE;
+  if (IsKeyPressed(KEY_E)) action = ACTION::ROTATE_COUNTERCLOCKWISE;
 }
 
 // returns how many rows that are erased
