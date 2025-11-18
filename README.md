@@ -17,7 +17,10 @@ I tried to create Tetris using C++ and Raylib.
 
 - Multi Color (Optional)
 - Sounds
-- Placeholder on instaplace
 - Web Support (WASM)
 - Add Game Over
 - GitHub Action auto release & deploy
+
+## Known Bug
+
+- Placeholder not accurately represent the position of the block
