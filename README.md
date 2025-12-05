@@ -4,6 +4,8 @@ I tried to create Tetris using C++ and Raylib.
 
 > 100% code written by me. No AI Code-Completion/Generation is used while making this project.
 
+![Screenshot](docs/images/screenshot_1.png "Screenshot")
+
 ## How To Play
 
 - Press <kbd>A</kbd> or <kbd>Arrow Left</kbd> to move left.
