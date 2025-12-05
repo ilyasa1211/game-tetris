@@ -20,7 +20,3 @@ I tried to create Tetris using C++ and Raylib.
 - Web Support (WASM)
 - Add Game Over
 - GitHub Action auto release & deploy
-
-## Known Bug
-
-- Placeholder not accurately represent the position of the block
