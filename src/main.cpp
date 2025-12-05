@@ -203,7 +203,7 @@ void run(const std::array<int, 2> window_size) {
           break;
         }
         shape_pos_grid[POS::X] += 1;
-        // break;
+        break;
       }
       case ACTION::MOVE_DOWN:
         if (shape_pos_grid[POS::Y] + (*shape).size() - 1 >=
@@ -230,9 +230,6 @@ void run(const std::array<int, 2> window_size) {
     }
 
     action = ACTION::NONE;
-
-    // const bool on_bottom =
-    //     shape_pos_grid[POS::Y] + (*shape).size() - 1 >= grid_size[SIZE::H];
 
     if (is_on_top_of_something(grid_container, *shape, shape_pos_grid)) {
       fill_grid_container(grid_container, *shape, shape_pos_grid);
@@ -341,17 +338,16 @@ int get_distance_on_placed(std::array<std::array<bool, W>, H> &grid_container,
 
   int least_distance = grid_container.size() - 1;
 
-  for (size_t i = 0; i < shape.at(0).size(); i++) {
+  for (size_t col = 0; col < shape.at(0).size(); col++) {
     int offset = 0;
 
-    for (int j = shape.size() - 1; j >= 0; j--) {
-      if (!shape.at(j).at(i)) {
-        offset++;
+    for (int row = shape.size() - 1; row >= 0; row--) {
+      if (!shape.at(row).at(col)) {
         continue;
       }
 
-      for (size_t n = y + j; n < grid_container.size() - 1; n++) {
-        if (grid_container.at(n + 1).at(x + i)) {
+      for (size_t n = y + row; n < grid_container.size() - 1; n++) {
+        if (grid_container.at(n + 1).at(x + col)) {
           break;
         }
 
