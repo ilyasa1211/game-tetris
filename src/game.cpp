@@ -18,18 +18,18 @@ Game::Game(const Size &grid_size, const Input &input)
     : input{input}, grid(Grid(grid_size.w, grid_size.h)) {
   this->shape_catalogs.push_back(
       std::make_unique<IShape>(0, 0, this->shape_color_rgba));
-  this->shape_catalogs.push_back(
-      std::make_unique<JShape>(0, 0, this->shape_color_rgba));
-  this->shape_catalogs.push_back(
-      std::make_unique<LShape>(0, 0, this->shape_color_rgba));
+  // this->shape_catalogs.push_back(
+  //     std::make_unique<JShape>(0, 0, this->shape_color_rgba));
+  // this->shape_catalogs.push_back(
+  //     std::make_unique<LShape>(0, 0, this->shape_color_rgba));
   this->shape_catalogs.push_back(
       std::make_unique<OShape>(0, 0, this->shape_color_rgba));
-  this->shape_catalogs.push_back(
-      std::make_unique<SShape>(0, 0, this->shape_color_rgba));
-  this->shape_catalogs.push_back(
-      std::make_unique<TShape>(0, 0, this->shape_color_rgba));
-  this->shape_catalogs.push_back(
-      std::make_unique<ZShape>(0, 0, this->shape_color_rgba));
+  // this->shape_catalogs.push_back(
+  //     std::make_unique<SShape>(0, 0, this->shape_color_rgba));
+  // this->shape_catalogs.push_back(
+  //     std::make_unique<TShape>(0, 0, this->shape_color_rgba));
+  // this->shape_catalogs.push_back(
+  //     std::make_unique<ZShape>(0, 0, this->shape_color_rgba));
 
   shape_queue[0] =
       shape_catalogs.at(GetRandomValue(0, shape_catalogs.size() - 1))->Clone();
