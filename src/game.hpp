@@ -11,7 +11,6 @@
 
 class Game {
  private:
-  const int target_fps = 60;
   const float move_interval_seconds = 0.5f;
   const float auto_score_interval_seconds =
       5.f;  // auto get score every 5 seconds

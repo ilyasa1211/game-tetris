@@ -15,6 +15,24 @@ I tried to create Tetris using C++ and Raylib.
 - Press <kbd>Q</kbd> to rotate counter-clockwise.
 - Press <kbd>E</kbd> to rotate clockwise.
 
+## Run with Docker
+
+Build docker image
+
+```bash
+git clone <this repo>
+docker build -t tetris . -f web.Dockerfile
+docker run --rm -p 8080:80 tetris
+```
+
+Open http://localhost:8080
+
+## Build
+
+cmake --preset default
+cmake --build out/build/default
+ctest --test-dir out/build/default
+
 ## TODO
 
 - Multi Color (Optional)

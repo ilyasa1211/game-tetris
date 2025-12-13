@@ -4,6 +4,10 @@ project(Tetris VERSION 0.1.0 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+if (EMSCRIPTEN)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s USE_GLFW=3 -s ASSERTIONS=1 -s WASM=1 -s ASYNCIFY -s GL_ENABLE_GET_PROC_ADDRESS=1")
+    set(CMAKE_EXECUTABLE_SUFFIX ".html") # This line is used to set your executable to build with the emscripten html template so that you can directly open it.
+endif()
 file(GLOB SOURCES
     src/*.cpp
 )
@@ -13,7 +17,6 @@ add_executable(Tetris ${SOURCES})
 
 include(FetchContent)
 set(RAYLIB_VERSION 5.5)
-set(GOOGLE_TEST_VERSION)
 
 FetchContent_Declare(
   raylib
@@ -23,6 +26,10 @@ FetchContent_Declare(
 set(BUILD_EXAMPLES OFF CACHE INTERNAL "" FORCE)
 
 FetchContent_MakeAvailable(raylib)
+target_link_libraries(${PROJECT_NAME} raylib)
+
+if (NOT EMSCRIPTEN)
+set(GOOGLE_TEST_VERSION)
 
 FetchContent_Declare(
   googletest
@@ -30,15 +37,13 @@ FetchContent_Declare(
 )
 
 FetchContent_MakeAvailable(googletest)
-
-target_link_libraries(${PROJECT_NAME} raylib)
-
 enable_testing()
 
 add_executable(
   simple_test
   src/matrix_test.cpp
 )
+
 target_link_libraries(
   simple_test
   GTest::gtest_main
@@ -46,3 +51,5 @@ target_link_libraries(
 
 include(GoogleTest)
 gtest_discover_tests(simple_test)
+endif ()
+

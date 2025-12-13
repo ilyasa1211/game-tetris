@@ -1,0 +1,8 @@
+.devcontainer/
+.vscode/
+docs/
+emsdk/
+out/
+.gitignore
+LICENSE
+README.md

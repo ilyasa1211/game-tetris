@@ -119,7 +119,7 @@ void Game::AddScore(int adder) { this->scores += adder; };
 void Game::OnUpdate() {
   this->input.RegisterInputAction(this->action);
 
-  auto& shape = shape_queue[0];
+  auto &shape = shape_queue[0];
 
   // get delta time if already passed interval limit
   // then apply offset + 1 on y axis
@@ -227,19 +227,4 @@ void Game::OnUpdate() {
   DrawText(time_played_text.c_str(), 0, 40, 20, WHITE);
 
   EndDrawing();
-};
-
-void Game::Run() {
-  // game loop
-#if defined(PLATFORM_WEB)
-  emscripten_set_main_loop(this->OnUpdate, 0, 1);
-#else
-  SetTargetFPS(this->target_fps);
-  // Main game loop
-  while (!WindowShouldClose())  // Detect window close
-                                // button or ESC key
-  {
-    this->OnUpdate();
-  }
-#endif
 };
