@@ -1,0 +1,53 @@
+on: 
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Install tools
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y \
+          python3 cmake unzip ninja-build curl xz-utils
+        
+      - name: Install emscripten
+        run: |
+          curl -L -o emsdk.zip https://github.com/emscripten-core/emsdk/archive/refs/tags/4.0.21.zip
+          unzip emsdk.zip
+          cd emsdk-4.0.21
+          ./emsdk install latest
+          ./emsdk activate latest
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Build project
+        run: |
+          set -e
+          . ./emsdk-4.0.21/emsdk_env.sh
+          emcmake cmake -S . -B out/build/web -G Ninja -DPLATFORM=Web
+          cmake --build out/build/web
+          mkdir -p /app/dist
+          mv out/build/web/Tetris.* /app/dist
+          mv /app/dist/Tetris.html /app/dist/index.html
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: /app/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
