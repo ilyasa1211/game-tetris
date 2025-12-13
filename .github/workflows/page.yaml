@@ -33,7 +33,8 @@ jobs:
         run: |
           set -e
           pwd
-          . ./emsdk-4.0.21/emsdk_env.sh
+          cd ${{ github.workspace }}
+          source ./emsdk-4.0.21/emsdk_env.sh
           emcmake cmake -S . -B out/build/web -G Ninja -DPLATFORM=Web
           cmake --build out/build/web
           mkdir -p ./dist
