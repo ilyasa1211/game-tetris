@@ -21,7 +21,6 @@ jobs:
         
       - name: Install emscripten
         run: |
-          pwd
           curl -L -o emsdk.zip https://github.com/emscripten-core/emsdk/archive/refs/tags/4.0.21.zip
           unzip emsdk.zip
           cd emsdk-4.0.21
@@ -31,9 +30,6 @@ jobs:
       - name: Build project
         shell: bash
         run: |
-          set -e
-          cd ${{ github.workspace }}
-          ls -Rl | head -40
           source ./emsdk-4.0.21/emsdk_env.sh
           emcmake cmake -S . -B out/build/web -G Ninja -DPLATFORM=Web
           cmake --build out/build/web
