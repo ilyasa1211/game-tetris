@@ -20,8 +20,8 @@ TEST(SimpleTest, TransposeSameSide) {
 
   std::vector<std::vector<int>> output = matrix::transpose(source);
 
-  for (size_t i = 0; i < expected.size(); i++) {
-    for (size_t j = 0; j < expected.at(0).size(); j++) {
+  for (int i = 0; i < expected.size(); i++) {
+    for (int j = 0; j < expected.at(0).size(); j++) {
       int a = output[i][j];
       int b = expected[i][j];
 
@@ -44,8 +44,8 @@ TEST(SimpleTest, TransposeDifferentSide) {
 
   std::vector<std::vector<int>> output = matrix::transpose(source);
 
-  for (size_t i = 0; i < expected.size(); i++) {
-    for (size_t j = 0; j < expected.at(0).size(); j++) {
+  for (int i = 0; i < expected.size(); i++) {
+    for (int j = 0; j < expected.at(0).size(); j++) {
       int a = output[i][j];
       int b = expected[i][j];
 
@@ -69,9 +69,9 @@ TEST(SimpleTest, ReflectHorizontalSameSide) {
 
   auto result = matrix::reflect_horizontal(src);
 
-  for (size_t i = 0; i < expected.size(); i++)
+  for (int i = 0; i < expected.size(); i++)
   {
-    for (size_t j = 0; j < expected.at(0).size(); j++)
+    for (int j = 0; j < expected.at(0).size(); j++)
     {
       EXPECT_EQ(result[i][j], expected[i][j]);
     }
@@ -91,9 +91,9 @@ TEST(SimpleTest, ReflectHorizontalDifferentSide) {
 
   auto result = matrix::reflect_horizontal(src);
 
-  for (size_t i = 0; i < expected.size(); i++)
+  for (int i = 0; i < expected.size(); i++)
   {
-    for (size_t j = 0; j < expected.at(0).size(); j++)
+    for (int j = 0; j < expected.at(0).size(); j++)
     {
       EXPECT_EQ(result[i][j], expected[i][j]);
     }
@@ -115,9 +115,9 @@ TEST(SimpleTest, ReflectVerticalSameSide) {
 
   auto result = matrix::reflect_vertical(src);
 
-  for (size_t i = 0; i < expected.size(); i++)
+  for (int i = 0; i < expected.size(); i++)
   {
-    for (size_t j = 0; j < expected.at(0).size(); j++)
+    for (int j = 0; j < expected.at(0).size(); j++)
     {
       EXPECT_EQ(result[i][j], expected[i][j]);
     }
@@ -139,9 +139,9 @@ TEST(SimpleTest, ReflectVerticalDifferentSide) {
 
   auto result = matrix::reflect_vertical(src);
 
-  for (size_t i = 0; i < expected.size(); i++)
+  for (int i = 0; i < expected.size(); i++)
   {
-    for (size_t j = 0; j < expected.at(0).size(); j++)
+    for (int j = 0; j < expected.at(0).size(); j++)
     {
       EXPECT_EQ(result[i][j], expected[i][j]);
     }

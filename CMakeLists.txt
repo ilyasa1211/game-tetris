@@ -4,10 +4,12 @@ project(Tetris VERSION 0.1.0 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(Tetris 
-  src/main.cpp
-  src/shapes.cpp
+file(GLOB SOURCES
+    src/*.cpp
 )
+
+list(FILTER SOURCES EXCLUDE REGEX ".*test.cpp$")
+add_executable(Tetris ${SOURCES})
 
 include(FetchContent)
 set(RAYLIB_VERSION 5.5)
