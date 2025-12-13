@@ -29,8 +29,10 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Build project
+        shell: bash
         run: |
           set -e
+          pwd
           . ./emsdk-4.0.21/emsdk_env.sh
           emcmake cmake -S . -B out/build/web -G Ninja -DPLATFORM=Web
           cmake --build out/build/web
